@@ -14,7 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      calendar_connections: {
+        Row: {
+          access_token: string | null
+          calendar_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_sync: string | null
+          provider: string
+          refresh_token: string | null
+          token_expiry: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          calendar_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          provider: string
+          refresh_token?: string | null
+          token_expiry?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          calendar_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          provider?: string
+          refresh_token?: string | null
+          token_expiry?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      synced_calendar_events: {
+        Row: {
+          connection_id: string | null
+          created_at: string | null
+          description: string | null
+          end_time: string
+          external_event_id: string
+          id: string
+          is_all_day: boolean | null
+          location: string | null
+          start_time: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time: string
+          external_event_id: string
+          id?: string
+          is_all_day?: boolean | null
+          location?: string | null
+          start_time: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string
+          external_event_id?: string
+          id?: string
+          is_all_day?: boolean | null
+          location?: string | null
+          start_time?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synced_calendar_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
