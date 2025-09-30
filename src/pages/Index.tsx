@@ -3,6 +3,8 @@ import { Calendar, Download, Sparkles, LayoutGrid, LayoutList } from "lucide-rea
 import { CalendarView, CalendarEvent } from "@/components/CalendarView";
 import { TaskInput, Task } from "@/components/TaskInput";
 import { TaskList } from "@/components/TaskList";
+import { FileUpload } from "@/components/FileUpload";
+import { CalendarIntegration } from "@/components/CalendarIntegration";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { scheduleTasks, downloadICS } from "@/lib/scheduler";
@@ -80,7 +82,25 @@ const Index = () => {
         <div className="grid lg:grid-cols-[350px_1fr] gap-6">
           {/* Sidebar */}
           <div className="space-y-6">
-            <TaskInput onTasksAdd={handleTasksAdd} />
+            <Tabs defaultValue="manual" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="manual">Manual</TabsTrigger>
+                <TabsTrigger value="upload">Upload</TabsTrigger>
+                <TabsTrigger value="sync">Sync</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="manual">
+                <TaskInput onTasksAdd={handleTasksAdd} />
+              </TabsContent>
+              
+              <TabsContent value="upload">
+                <FileUpload onTasksExtracted={handleTasksAdd} />
+              </TabsContent>
+              
+              <TabsContent value="sync">
+                <CalendarIntegration />
+              </TabsContent>
+            </Tabs>
             
             <div>
               <div className="flex items-center justify-between mb-3">
