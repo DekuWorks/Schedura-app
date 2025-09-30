@@ -1,8 +1,10 @@
-import { Clock, Trash2, GripVertical } from "lucide-react";
+import { Clock, Trash2, GripVertical, Calendar, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Task } from "./TaskInput";
+import { format } from "date-fns";
 
 interface TaskListProps {
   tasks: Task[];
@@ -41,9 +43,24 @@ export const TaskList = ({ tasks, onTaskRemove }: TaskListProps) => {
           <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
           <div className="flex-1 min-w-0">
             <h4 className="font-medium truncate">{task.title}</h4>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-              <Clock className="h-3 w-3" />
-              <span>{formatDuration(task.duration)}</span>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {task.startTime && task.endTime ? (
+                <Badge variant="secondary" className="text-xs gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {format(task.startTime, "h:mm a")} - {format(task.endTime, "h:mm a")}
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="text-xs gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatDuration(task.duration)}
+                </Badge>
+              )}
+              {task.notes && (
+                <Badge variant="outline" className="text-xs gap-1">
+                  <StickyNote className="h-3 w-3" />
+                  Has notes
+                </Badge>
+              )}
             </div>
           </div>
           <Button

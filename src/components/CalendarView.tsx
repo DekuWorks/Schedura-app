@@ -10,6 +10,7 @@ export interface CalendarEvent {
   start: Date;
   end: Date;
   color?: string;
+  notes?: string;
 }
 
 interface CalendarViewProps {

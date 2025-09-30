@@ -24,8 +24,24 @@ export const scheduleTasks = (
   const scheduledEvents: CalendarEvent[] = [];
   let currentSlot = getNextAvailableSlot(startDate, workStartHour);
 
-  // Sort tasks by priority (high -> medium -> low) and then by duration
-  const sortedTasks = [...tasks].sort((a, b) => {
+  // Separate tasks with fixed times from tasks that need scheduling
+  const fixedTimeTasks = tasks.filter(t => t.startTime && t.endTime);
+  const flexibleTasks = tasks.filter(t => !t.startTime || !t.endTime);
+
+  // Add fixed time tasks first
+  for (const task of fixedTimeTasks) {
+    scheduledEvents.push({
+      id: task.id,
+      title: task.title,
+      start: task.startTime!,
+      end: task.endTime!,
+      color: getPriorityColor(task.priority),
+      notes: task.notes,
+    });
+  }
+
+  // Sort flexible tasks by priority (high -> medium -> low) and then by duration
+  const sortedTasks = [...flexibleTasks].sort((a, b) => {
     const priorityWeight = { high: 3, medium: 2, low: 1 };
     const priorityDiff = (priorityWeight[b.priority || "medium"] - priorityWeight[a.priority || "medium"]);
     if (priorityDiff !== 0) return priorityDiff;
@@ -86,6 +102,7 @@ export const scheduleTasks = (
         start: currentSlot,
         end: proposedEnd,
         color: getPriorityColor(task.priority),
+        notes: task.notes,
       });
 
       currentSlot = addMinutes(proposedEnd, 15); // Add 15-minute buffer

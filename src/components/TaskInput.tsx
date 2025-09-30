@@ -12,6 +12,9 @@ export interface Task {
   title: string;
   duration: number; // in minutes
   priority?: "low" | "medium" | "high";
+  startTime?: Date;
+  endTime?: Date;
+  notes?: string;
 }
 
 interface TaskInputProps {
@@ -23,6 +26,9 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
   const [singleTask, setSingleTask] = useState("");
   const [duration, setDuration] = useState("30");
   const [mode, setMode] = useState<"single" | "bulk">("single");
+  const [notes, setNotes] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   const parseBulkTasks = (text: string): Task[] => {
     const lines = text.split("\n").filter(line => line.trim());
@@ -59,15 +65,35 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
       return;
     }
 
+    let taskStartTime: Date | undefined;
+    let taskEndTime: Date | undefined;
+
+    if (startTime && endTime) {
+      const now = new Date();
+      taskStartTime = new Date(now.toDateString() + ' ' + startTime);
+      taskEndTime = new Date(now.toDateString() + ' ' + endTime);
+      
+      if (taskEndTime <= taskStartTime) {
+        toast.error("End time must be after start time");
+        return;
+      }
+    }
+
     const task: Task = {
       id: `task-${Date.now()}`,
       title: singleTask,
       duration: parseInt(duration),
       priority: "medium",
+      startTime: taskStartTime,
+      endTime: taskEndTime,
+      notes: notes.trim() || undefined,
     };
 
     onTasksAdd([task]);
     setSingleTask("");
+    setNotes("");
+    setStartTime("");
+    setEndTime("");
     toast.success("Task added!");
   };
 
@@ -114,6 +140,28 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
               onKeyDown={(e) => e.key === "Enter" && handleAddSingleTask()}
             />
           </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="start-time">Start Time (optional)</Label>
+              <Input
+                id="start-time"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="end-time">End Time (optional)</Label>
+              <Input
+                id="end-time"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+            </div>
+          </div>
+
           <div>
             <Label htmlFor="duration">Duration (minutes)</Label>
             <Input
@@ -124,7 +172,22 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Used if no specific time is set
+            </p>
           </div>
+
+          <div>
+            <Label htmlFor="notes">Notes (optional)</Label>
+            <Textarea
+              id="notes"
+              placeholder="Add any details or context..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
+
           <Button onClick={handleAddSingleTask} className="w-full">
             <Plus className="mr-2 h-4 w-4" />
             Add Task

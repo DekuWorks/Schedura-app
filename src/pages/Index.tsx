@@ -5,6 +5,7 @@ import { TaskInput, Task } from "@/components/TaskInput";
 import { TaskList } from "@/components/TaskList";
 import { FileUpload } from "@/components/FileUpload";
 import { CalendarIntegration } from "@/components/CalendarIntegration";
+import { EventDialog } from "@/components/EventDialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { scheduleTasks, downloadICS } from "@/lib/scheduler";
@@ -14,6 +15,8 @@ const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [scheduledEvents, setScheduledEvents] = useState<CalendarEvent[]>([]);
   const [calendarView, setCalendarView] = useState<"week" | "month">("week");
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
 
   const handleTasksAdd = (newTasks: Task[]) => {
     setTasks([...tasks, ...newTasks]);
@@ -140,12 +143,19 @@ const Index = () => {
               events={scheduledEvents}
               view={calendarView}
               onEventClick={(event) => {
-                toast.info(event.title);
+                setSelectedEvent(event);
+                setEventDialogOpen(true);
               }}
             />
           </div>
         </div>
       </main>
+
+      <EventDialog 
+        event={selectedEvent}
+        open={eventDialogOpen}
+        onOpenChange={setEventDialogOpen}
+      />
     </div>
   );
 };
