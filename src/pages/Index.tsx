@@ -6,6 +6,7 @@ import { TaskList } from "@/components/TaskList";
 import { FileUpload } from "@/components/FileUpload";
 import { CalendarIntegration } from "@/components/CalendarIntegration";
 import { EventDialog } from "@/components/EventDialog";
+import { GoogleOAuthHandler } from "@/components/GoogleOAuthHandler";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { scheduleTasks, downloadICS } from "@/lib/scheduler";
@@ -50,6 +51,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+      <GoogleOAuthHandler />
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
@@ -101,7 +103,7 @@ const Index = () => {
               </TabsContent>
               
               <TabsContent value="sync">
-                <CalendarIntegration />
+                <CalendarIntegration scheduledEvents={scheduledEvents} />
               </TabsContent>
             </Tabs>
             

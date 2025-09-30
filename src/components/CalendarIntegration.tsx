@@ -1,37 +1,156 @@
-import { useState } from "react";
-import { Calendar, ExternalLink, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, ExternalLink, Settings, Check, Loader2, RefreshCw, Upload as UploadIcon, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { CalendarEvent } from "./CalendarView";
 
-export const CalendarIntegration = () => {
-  const [googleClientId, setGoogleClientId] = useState("");
-  const [appleClientId, setAppleClientId] = useState("");
+interface CalendarIntegrationProps {
+  scheduledEvents: CalendarEvent[];
+}
 
-  const handleGoogleConnect = () => {
-    if (!googleClientId) {
-      toast.error("Please enter your Google Client ID first");
-      return;
+export const CalendarIntegration = ({ scheduledEvents }: CalendarIntegrationProps) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkConnection();
+  }, []);
+
+  const checkConnection = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('calendar_connections')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('provider', 'google')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      setIsConnected(!!data);
+      setLastSync(data?.last_sync || null);
+    } catch (error) {
+      console.error('Error checking connection:', error);
     }
-    toast.info("Google Calendar integration coming soon!");
   };
 
-  const handleAppleConnect = () => {
-    if (!appleClientId) {
-      toast.error("Please enter your Apple Client ID first");
-      return;
+  const handleGoogleConnect = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'https://www.googleapis.com/auth/calendar',
+          redirectTo: `${window.location.origin}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success('Redirecting to Google for authorization...');
+    } catch (error) {
+      console.error('Error connecting to Google:', error);
+      toast.error('Failed to connect to Google Calendar');
+    } finally {
+      setIsLoading(false);
     }
-    toast.info("Apple Calendar integration coming soon!");
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('calendar_connections')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('provider', 'google');
+
+      if (error) throw error;
+
+      setIsConnected(false);
+      toast.success('Disconnected from Google Calendar');
+    } catch (error) {
+      console.error('Error disconnecting:', error);
+      toast.error('Failed to disconnect');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSyncFromGoogle = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.functions.invoke('google-calendar-sync', {
+        body: { action: 'fetch' }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast.error(data.error);
+      } else {
+        toast.success(data.message);
+        setLastSync(new Date().toISOString());
+      }
+    } catch (error) {
+      console.error('Error syncing from Google:', error);
+      toast.error('Failed to sync from Google Calendar');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExportToGoogle = async () => {
+    try {
+      if (scheduledEvents.length === 0) {
+        toast.error('No events to export. Schedule some tasks first!');
+        return;
+      }
+
+      setIsLoading(true);
+      const { data, error } = await supabase.functions.invoke('google-calendar-sync', {
+        body: { 
+          action: 'export',
+          events: scheduledEvents
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast.error(data.error);
+      } else {
+        toast.success(data.message);
+      }
+    } catch (error) {
+      console.error('Error exporting to Google:', error);
+      toast.error('Failed to export to Google Calendar');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Card className="p-6 shadow-[var(--shadow-medium)]">
       <div className="flex items-center gap-2 mb-4">
         <Calendar className="h-5 w-5 text-accent" />
-        <h3 className="font-semibold text-lg">Calendar Integration</h3>
+        <h3 className="font-semibold text-lg">Calendar Sync</h3>
       </div>
 
       <Tabs defaultValue="google" className="w-full">
@@ -41,68 +160,103 @@ export const CalendarIntegration = () => {
         </TabsList>
 
         <TabsContent value="google" className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="google-client-id">Google OAuth Client ID</Label>
-            <Input
-              id="google-client-id"
-              placeholder="Your Google Client ID"
-              value={googleClientId}
-              onChange={(e) => setGoogleClientId(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Get your Client ID from{" "}
-              <a
-                href="https://console.cloud.google.com/apis/credentials"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-accent hover:underline inline-flex items-center gap-1"
+          {!isConnected ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Connect your Google Calendar to sync events and export your scheduled tasks.
+              </p>
+              <Button 
+                onClick={handleGoogleConnect} 
+                className="w-full" 
+                disabled={isLoading}
               >
-                Google Cloud Console
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </p>
-          </div>
-          <Button onClick={handleGoogleConnect} className="w-full" variant="outline">
-            <Settings className="mr-2 h-4 w-4" />
-            Configure Google Calendar
-          </Button>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Connect Google Calendar
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                You'll be redirected to Google to authorize access to your calendar.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-success">
+                <Check className="h-4 w-4" />
+                <span>Connected to Google Calendar</span>
+              </div>
+
+              {lastSync && (
+                <p className="text-xs text-muted-foreground">
+                  Last synced: {new Date(lastSync).toLocaleString()}
+                </p>
+              )}
+
+              <div className="grid gap-2">
+                <Button 
+                  onClick={handleSyncFromGoogle} 
+                  variant="outline" 
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Import from Google Calendar
+                </Button>
+
+                <Button 
+                  onClick={handleExportToGoogle} 
+                  variant="outline" 
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <UploadIcon className="mr-2 h-4 w-4" />
+                  )}
+                  Export to Google Calendar
+                </Button>
+
+                <Button 
+                  onClick={handleDisconnect} 
+                  variant="ghost" 
+                  className="w-full text-destructive hover:text-destructive"
+                  disabled={isLoading}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Disconnect
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="apple" className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="apple-client-id">Apple OAuth Client ID</Label>
-            <Input
-              id="apple-client-id"
-              placeholder="Your Apple Client ID"
-              value={appleClientId}
-              onChange={(e) => setAppleClientId(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Get your Client ID from{" "}
-              <a
-                href="https://developer.apple.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-accent hover:underline inline-flex items-center gap-1"
-              >
-                Apple Developer Portal
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </p>
+          <p className="text-sm text-muted-foreground">
+            Apple Calendar doesn't have a public API. Export your schedule as .ics file and import it to iCloud Calendar.
+          </p>
+          <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+            <strong>How to import to iCloud Calendar:</strong>
+            <ol className="list-decimal list-inside mt-2 space-y-1">
+              <li>Click "Export .ics" button in the main view</li>
+              <li>Open iCloud Calendar on web or Mac</li>
+              <li>Click File → Import</li>
+              <li>Select the downloaded .ics file</li>
+            </ol>
           </div>
-          <Button onClick={handleAppleConnect} className="w-full" variant="outline">
-            <Settings className="mr-2 h-4 w-4" />
-            Configure Apple Calendar
-          </Button>
         </TabsContent>
       </Tabs>
-
-      <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-        <p className="text-xs text-muted-foreground">
-          <strong>Note:</strong> Calendar sync requires OAuth credentials. You'll need to create
-          OAuth apps in Google Cloud Console or Apple Developer Portal. Full integration coming soon!
-        </p>
-      </div>
     </Card>
   );
 };
