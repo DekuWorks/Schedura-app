@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Download, Sparkles, LayoutGrid, LayoutList } from "lucide-react";
+import { Calendar, Download, Sparkles, LayoutGrid, LayoutList, LogOut, User } from "lucide-react";
 import { CalendarView, CalendarEvent } from "@/components/CalendarView";
 import { TaskInput, Task } from "@/components/TaskInput";
 import { TaskList } from "@/components/TaskList";
@@ -9,15 +9,24 @@ import { EventDialog } from "@/components/EventDialog";
 import { GoogleOAuthHandler } from "@/components/GoogleOAuthHandler";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { scheduleTasks, downloadICS } from "@/lib/scheduler";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user, signOut } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [scheduledEvents, setScheduledEvents] = useState<CalendarEvent[]>([]);
   const [calendarView, setCalendarView] = useState<"week" | "month">("week");
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
+
+  const getUserInitials = () => {
+    if (!user?.email) return "U";
+    return user.email.substring(0, 2).toUpperCase();
+  };
 
   const handleTasksAdd = (newTasks: Task[]) => {
     setTasks([...tasks, ...newTasks]);
@@ -68,7 +77,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button onClick={handleAutoSchedule} className="gap-2">
                 <Sparkles className="h-4 w-4" />
                 Auto Schedule
@@ -77,6 +86,31 @@ const Index = () => {
                 <Download className="h-4 w-4" />
                 Export .ics
               </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">My Account</p>
+                      <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="text-destructive cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
