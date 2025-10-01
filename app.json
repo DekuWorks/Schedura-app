@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Schedura App",
+    "slug": "schedura-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#4F46E5"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.schedura.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "scheme": "schedura",
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#4F46E5"
+      },
+      "package": "com.schedura.app"
+    },
+    "web": {
+      "favicon": "./public/placeholder.svg",
+      "bundler": "vite"
+    },
+    "platforms": ["ios", "android", "web"],
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ],
+      "expo-dev-client",
+      "expo-router"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7e6c2e6e-b895-46e8-a3ac-9f08e9802ebf"
+      }
+    },
+    "owner": "dekuworks"
+  }
+}

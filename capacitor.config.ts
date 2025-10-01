@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.3cb02f8670af401696241cbc9792e5f9',
+  appId: 'com.schedura.app',
   appName: 'schedura-app',
   webDir: 'dist',
   server: {
