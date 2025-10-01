@@ -38,7 +38,7 @@ export default function Calendar({ tasks = [], onDateSelect, selectedDate }) {
     const isToday = date.toDateString() === today.toDateString();
     const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
     const hasTasks = tasks.some(task => {
-      const taskDate = new Date(task.date);
+      const taskDate = new Date(task.start_time || task.created_at);
       return taskDate.toDateString() === date.toDateString();
     });
     

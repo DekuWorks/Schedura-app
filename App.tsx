@@ -48,7 +48,6 @@ function MainApp() {
   const { user, signOut, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'calendar' | 'availability'>('calendar');
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('All Tasks');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -142,7 +141,7 @@ function MainApp() {
         end_time: '', 
         notes: '' 
       });
-      setSelectedCategory(null);
+      setSelectedCategory(null as Category | null);
       setShowAddTask(false);
       Alert.alert('Success', 'Task created successfully');
     } catch (error) {
@@ -468,7 +467,7 @@ function MainApp() {
         {/* Calendar View */}
         {activeTab === 'calendar' && (
           <Calendar 
-            tasks={tasks}
+            tasks={tasks as any}
             onDateSelect={setSelectedDate}
             selectedDate={selectedDate}
           />
@@ -585,7 +584,7 @@ function MainApp() {
             visible={showCategoryPicker}
             onClose={() => setShowCategoryPicker(false)}
             onSelectCategory={setSelectedCategory}
-            selectedCategoryId={selectedCategory?.id}
+            selectedCategoryId={selectedCategory?.id || null}
           />
         </View>
       );

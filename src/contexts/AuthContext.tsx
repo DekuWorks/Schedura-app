@@ -1,7 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../../supabase';
 
-const AuthContext = createContext({});
+interface AuthContextType {
+  user: any;
+  loading: boolean;
+  signUp: (email: string, password: string) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<any>;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -11,9 +19,13 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     // Get initial session
@@ -33,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email, password) => {
+  const signUp = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -41,7 +53,7 @@ export const AuthProvider = ({ children }) => {
     return { data, error };
   };
 
-  const signIn = async (email, password) => {
+  const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -50,8 +62,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    await supabase.auth.signOut();
   };
 
   const value = {
