@@ -15,7 +15,12 @@ export interface Category {
   workspace_id: string;
 }
 
-export const CategoryManager = () => {
+interface CategoryManagerProps {
+  selectedCategoryId?: string | null;
+  onCategorySelect?: (categoryId: string | null) => void;
+}
+
+export const CategoryManager = ({ selectedCategoryId, onCategorySelect }: CategoryManagerProps = {}) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -182,6 +187,17 @@ export const CategoryManager = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
+          {onCategorySelect && (
+            <div
+              onClick={() => onCategorySelect(null)}
+              className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-accent/50 transition-colors ${!selectedCategoryId ? 'bg-accent/30 border-primary' : ''}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded-full bg-muted" />
+                <span className="font-medium">All Tasks</span>
+              </div>
+            </div>
+          )}
           {categories.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
               No categories yet. Create one to organize your tasks!
@@ -190,7 +206,10 @@ export const CategoryManager = () => {
             categories.map((category) => (
               <div
                 key={category.id}
-                className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+                onClick={() => onCategorySelect?.(category.id)}
+                className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                  onCategorySelect ? 'cursor-pointer hover:bg-accent/50' : ''
+                } ${selectedCategoryId === category.id ? 'bg-accent/30 border-primary' : ''}`}
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -199,7 +218,7 @@ export const CategoryManager = () => {
                   />
                   <span className="font-medium">{category.name}</span>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                   <Button
                     size="sm"
                     variant="ghost"

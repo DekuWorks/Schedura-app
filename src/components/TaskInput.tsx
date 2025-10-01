@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Category } from "./CategoryManager";
 
 export interface Task {
   id: string;
@@ -15,6 +18,9 @@ export interface Task {
   startTime?: Date;
   endTime?: Date;
   notes?: string;
+  categoryId?: string;
+  categoryName?: string;
+  categoryColor?: string;
 }
 
 interface TaskInputProps {
@@ -29,6 +35,30 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
   const [notes, setNotes] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    const { data: workspace } = await supabase
+      .from('workspaces')
+      .select('id')
+      .limit(1)
+      .single();
+    
+    if (workspace) {
+      const { data } = await supabase
+        .from('task_categories')
+        .select('*')
+        .eq('workspace_id', workspace.id)
+        .order('name');
+      
+      if (data) setCategories(data);
+    }
+  };
 
   const parseBulkTasks = (text: string): Task[] => {
     const lines = text.split("\n").filter(line => line.trim());
@@ -79,6 +109,8 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
       }
     }
 
+    const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+    
     const task: Task = {
       id: `task-${Date.now()}`,
       title: singleTask,
@@ -87,6 +119,9 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
       startTime: taskStartTime,
       endTime: taskEndTime,
       notes: notes.trim() || undefined,
+      categoryId: selectedCategoryId || undefined,
+      categoryName: selectedCategory?.name,
+      categoryColor: selectedCategory?.color,
     };
 
     onTasksAdd([task]);
@@ -94,6 +129,7 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
     setNotes("");
     setStartTime("");
     setEndTime("");
+    setSelectedCategoryId("");
     toast.success("Task added!");
   };
 
@@ -162,19 +198,40 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="duration">Duration (minutes)</Label>
-            <Input
-              id="duration"
-              type="number"
-              min="5"
-              step="5"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Used if no specific time is set
-            </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Input
+                id="duration"
+                type="number"
+                min="5"
+                step="5"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="None" />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  <SelectItem value="">None</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        {cat.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>

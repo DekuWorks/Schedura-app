@@ -30,6 +30,7 @@ const Index = () => {
   const [calendarView, setCalendarView] = useState<"week" | "month">("week");
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
 
   const getUserInitials = () => {
     if (!user?.email) return "U";
@@ -71,45 +72,47 @@ const Index = () => {
       <GoogleOAuthHandler />
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-accent to-primary">
-                <Calendar className="h-6 w-6 text-white" />
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="p-1.5 md:p-2 rounded-lg bg-gradient-to-br from-accent to-primary">
+                <Calendar className="h-5 w-5 md:h-6 md:w-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
+              <div className="hidden sm:block">
+                <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
                   Schedura
                 </h1>
-                <p className="text-xs text-muted-foreground">Smart Task Scheduling</p>
+                <p className="text-xs text-muted-foreground hidden md:block">Smart Task Scheduling</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <SubscriptionStatus />
-              <Button onClick={toggleTheme} variant="ghost" size="icon">
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <div className="flex items-center gap-1 md:gap-2">
+              <div className="hidden lg:block">
+                <SubscriptionStatus />
+              </div>
+              <Button onClick={toggleTheme} variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
+                {theme === 'dark' ? <Sun className="h-4 w-4 md:h-5 md:w-5" /> : <Moon className="h-4 w-4 md:h-5 md:w-5" />}
               </Button>
-              <Button onClick={handleAutoSchedule} className="gap-2">
-                <Sparkles className="h-4 w-4" />
-                Auto Schedule
+              <Button onClick={handleAutoSchedule} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-10 px-2 md:px-4">
+                <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Auto</span>
               </Button>
-              <Button onClick={handleExport} variant="outline" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export .ics
+              <Button onClick={handleExport} variant="outline" className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-10 px-2 md:px-4 hidden sm:flex">
+                <Download className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden md:inline">Export</span>
               </Button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                  <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 md:h-10 md:w-10">
+                    <Avatar className="h-7 w-7 md:h-8 md:w-8">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs md:text-sm">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-background">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium">My Account</p>
@@ -129,11 +132,14 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-[350px_1fr] gap-6">
+      <main className="container mx-auto px-2 sm:px-4 py-4 md:py-8">
+        <div className="grid lg:grid-cols-[350px_1fr] gap-4 md:gap-6">
           {/* Sidebar */}
-          <div className="space-y-6">
-            <CategoryManager />
+          <div className="space-y-4 md:space-y-6">
+            <CategoryManager 
+              selectedCategoryId={selectedCategoryFilter}
+              onCategorySelect={setSelectedCategoryFilter}
+            />
             
             <AISuggestions 
               onAddTask={(task) => {
@@ -173,34 +179,39 @@ const Index = () => {
             
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-lg">Tasks ({tasks.length})</h3>
+                <h3 className="font-semibold text-lg">
+                  Tasks ({selectedCategoryFilter ? tasks.filter(t => t.categoryId === selectedCategoryFilter).length : tasks.length})
+                </h3>
               </div>
-              <TaskList tasks={tasks} onTaskRemove={handleTaskRemove} />
+              <TaskList 
+                tasks={selectedCategoryFilter ? tasks.filter(t => t.categoryId === selectedCategoryFilter) : tasks} 
+                onTaskRemove={handleTaskRemove} 
+              />
             </div>
           </div>
 
           {/* Calendar */}
-          <div className="bg-card rounded-lg p-6 shadow-[var(--shadow-medium)] min-h-[600px]">
+          <div className="bg-card rounded-lg p-3 md:p-6 shadow-[var(--shadow-medium)] min-h-[400px] md:min-h-[600px]">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Calendar</h2>
-              <div className="flex gap-2">
+              <h2 className="text-lg md:text-xl font-semibold">Calendar</h2>
+              <div className="flex gap-1 md:gap-2">
                 <Button
                   variant={calendarView === "week" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCalendarView("week")}
-                  className="gap-2"
+                  className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3"
                 >
-                  <LayoutList className="h-4 w-4" />
-                  Week
+                  <LayoutList className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Week</span>
                 </Button>
                 <Button
                   variant={calendarView === "month" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCalendarView("month")}
-                  className="gap-2"
+                  className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3"
                 >
-                  <LayoutGrid className="h-4 w-4" />
-                  Month
+                  <LayoutGrid className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Month</span>
                 </Button>
               </div>
             </div>
