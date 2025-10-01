@@ -14,6 +14,7 @@ import { SubscriptionStatus } from "@/components/SubscriptionStatus";
 import { ImageEventScanner } from "@/components/ImageEventScanner";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { AvailabilityView } from "@/components/AvailabilityView";
+import { TaskScheduler } from "@/components/TaskScheduler";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -139,6 +140,8 @@ const Index = () => {
         <div className="grid lg:grid-cols-[350px_1fr] gap-4 md:gap-6">
           {/* Sidebar */}
           <div className="space-y-4 md:space-y-6">
+            <TaskScheduler />
+            
             <CategoryManager 
               selectedCategoryId={selectedCategoryFilter}
               onCategorySelect={setSelectedCategoryFilter}
