@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Calendar, Download, Sparkles, LayoutGrid, LayoutList, LogOut, User } from "lucide-react";
+import { Calendar, Download, Sparkles, LayoutGrid, LayoutList, LogOut, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { CalendarView, CalendarEvent } from "@/components/CalendarView";
 import { TaskInput, Task } from "@/components/TaskInput";
 import { TaskList } from "@/components/TaskList";
@@ -7,6 +8,8 @@ import { FileUpload } from "@/components/FileUpload";
 import { CalendarIntegration } from "@/components/CalendarIntegration";
 import { EventDialog } from "@/components/EventDialog";
 import { GoogleOAuthHandler } from "@/components/GoogleOAuthHandler";
+import { CategoryManager } from "@/components/CategoryManager";
+import { AISuggestions } from "@/components/AISuggestions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -17,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [scheduledEvents, setScheduledEvents] = useState<CalendarEvent[]>([]);
   const [calendarView, setCalendarView] = useState<"week" | "month">("week");
@@ -78,6 +82,9 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              <Button onClick={toggleTheme} variant="ghost" size="icon">
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
               <Button onClick={handleAutoSchedule} className="gap-2">
                 <Sparkles className="h-4 w-4" />
                 Auto Schedule
@@ -121,6 +128,19 @@ const Index = () => {
         <div className="grid lg:grid-cols-[350px_1fr] gap-6">
           {/* Sidebar */}
           <div className="space-y-6">
+            <CategoryManager />
+            
+            <AISuggestions 
+              onAddTask={(task) => {
+                handleTasksAdd([{
+                  id: Date.now().toString(),
+                  title: task.title,
+                  priority: task.priority as 'low' | 'medium' | 'high',
+                  duration: 60
+                }]);
+              }}
+            />
+            
             <Tabs defaultValue="manual" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="manual">Manual</TabsTrigger>
