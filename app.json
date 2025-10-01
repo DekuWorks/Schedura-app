@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ScheduraMobile",
-    "slug": "ScheduraMobile",
+    "name": "Schedura",
+    "slug": "schedura",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dekuworks.schedura",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,6 +29,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3da240f5-a0ec-4332-8a4d-178f053e8178"
+      }
+    },
+    "owner": "dekuworks"
   }
 }
