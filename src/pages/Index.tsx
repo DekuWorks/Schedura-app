@@ -12,6 +12,7 @@ import { CategoryManager } from "@/components/CategoryManager";
 import { AISuggestions } from "@/components/AISuggestions";
 import { SubscriptionStatus } from "@/components/SubscriptionStatus";
 import { ImageEventScanner } from "@/components/ImageEventScanner";
+import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -90,6 +91,7 @@ const Index = () => {
               <div className="hidden lg:block">
                 <SubscriptionStatus />
               </div>
+              <TimezoneSelector />
               <Button onClick={toggleTheme} variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
                 {theme === 'dark' ? <Sun className="h-4 w-4 md:h-5 md:w-5" /> : <Moon className="h-4 w-4 md:h-5 md:w-5" />}
               </Button>

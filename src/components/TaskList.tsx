@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Task } from "./TaskInput";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
+import { useTimezone } from "@/hooks/useTimezone";
 
 interface TaskListProps {
   tasks: Task[];
@@ -12,6 +14,8 @@ interface TaskListProps {
 }
 
 export const TaskList = ({ tasks, onTaskRemove }: TaskListProps) => {
+  const timezone = useTimezone();
+
   if (tasks.length === 0) {
     return (
       <Card className="p-8 text-center">
@@ -25,6 +29,14 @@ export const TaskList = ({ tasks, onTaskRemove }: TaskListProps) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
+
+  const formatTime = (date: Date) => {
+    try {
+      return formatInTimeZone(date, timezone, "h:mm a");
+    } catch {
+      return format(date, "h:mm a");
+    }
   };
 
   return (
@@ -55,7 +67,7 @@ export const TaskList = ({ tasks, onTaskRemove }: TaskListProps) => {
               {task.startTime && task.endTime ? (
                 <Badge variant="secondary" className="text-xs gap-1">
                   <Calendar className="h-3 w-3" />
-                  {format(task.startTime, "h:mm a")} - {format(task.endTime, "h:mm a")}
+                  {formatTime(task.startTime)} - {formatTime(task.endTime)}
                 </Badge>
               ) : (
                 <Badge variant="secondary" className="text-xs gap-1">
