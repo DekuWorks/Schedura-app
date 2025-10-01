@@ -98,7 +98,17 @@ export default function Pricing() {
 
       if (data?.url) {
         console.log("Redirecting to:", data.url);
-        window.location.href = data.url;
+        toast({ title: "Redirecting to checkout..." });
+        try {
+          if (window.top) {
+            (window.top as Window).location.href = data.url;
+          } else {
+            window.location.href = data.url;
+          }
+        } catch (e) {
+          console.warn("Top-level redirect blocked, opening in new tab.", e);
+          window.open(data.url, "_blank", "noopener,noreferrer");
+        }
       } else {
         console.error("No URL in response:", data);
         throw new Error("No checkout URL received");
