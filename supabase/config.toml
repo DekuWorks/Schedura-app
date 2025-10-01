@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.ai-suggest-tasks]
 verify_jwt = false
+
+[functions.analyze-availability]
+verify_jwt = true

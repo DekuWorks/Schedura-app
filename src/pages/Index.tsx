@@ -13,6 +13,7 @@ import { AISuggestions } from "@/components/AISuggestions";
 import { SubscriptionStatus } from "@/components/SubscriptionStatus";
 import { ImageEventScanner } from "@/components/ImageEventScanner";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
+import { AvailabilityView } from "@/components/AvailabilityView";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -192,40 +193,53 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Calendar */}
+          {/* Calendar & Availability */}
           <div className="bg-card rounded-lg p-3 md:p-6 shadow-[var(--shadow-medium)] min-h-[400px] md:min-h-[600px]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg md:text-xl font-semibold">Calendar</h2>
-              <div className="flex gap-1 md:gap-2">
-                <Button
-                  variant={calendarView === "week" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCalendarView("week")}
-                  className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3"
-                >
-                  <LayoutList className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Week</span>
-                </Button>
-                <Button
-                  variant={calendarView === "month" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCalendarView("month")}
-                  className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3"
-                >
-                  <LayoutGrid className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Month</span>
-                </Button>
-              </div>
-            </div>
-            
-            <CalendarView
-              events={scheduledEvents}
-              view={calendarView}
-              onEventClick={(event) => {
-                setSelectedEvent(event);
-                setEventDialogOpen(true);
-              }}
-            />
+            <Tabs defaultValue="calendar" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="calendar">Calendar</TabsTrigger>
+                <TabsTrigger value="availability">Availability</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="calendar">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg md:text-xl font-semibold">Calendar</h2>
+                  <div className="flex gap-1 md:gap-2">
+                    <Button
+                      variant={calendarView === "week" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCalendarView("week")}
+                      className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3"
+                    >
+                      <LayoutList className="h-3 w-3 md:h-4 md:w-4" />
+                      <span className="hidden sm:inline">Week</span>
+                    </Button>
+                    <Button
+                      variant={calendarView === "month" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCalendarView("month")}
+                      className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3"
+                    >
+                      <LayoutGrid className="h-3 w-3 md:h-4 md:w-4" />
+                      <span className="hidden sm:inline">Month</span>
+                    </Button>
+                  </div>
+                </div>
+                
+                <CalendarView
+                  events={scheduledEvents}
+                  view={calendarView}
+                  onEventClick={(event) => {
+                    setSelectedEvent(event);
+                    setEventDialogOpen(true);
+                  }}
+                />
+              </TabsContent>
+              
+              <TabsContent value="availability">
+                <AvailabilityView />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </main>
