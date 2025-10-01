@@ -33,7 +33,7 @@ const plans = [
       "Google Calendar sync",
       "Priority support",
     ],
-    priceId: "price_pro_monthly", // Replace with your Stripe price ID
+    priceId: "price_1SDPSRJd5wbPvQ1IjHVI6PO0",
     popular: true,
   },
   {
@@ -49,7 +49,7 @@ const plans = [
       "White-label option",
       "24/7 dedicated support",
     ],
-    priceId: "price_premium_monthly", // Replace with your Stripe price ID
+    priceId: "prod_T9izwWecBzpGDi",
   },
 ];
 
