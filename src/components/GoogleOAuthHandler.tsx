@@ -16,7 +16,7 @@ export const GoogleOAuthHandler = () => {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
 
-          // Store the Google Calendar tokens
+          // Store the Calendar tokens
           const expiryDate = new Date();
           expiryDate.setSeconds(expiryDate.getSeconds() + parseInt(expiresIn || '3600'));
 
@@ -41,7 +41,7 @@ export const GoogleOAuthHandler = () => {
           window.history.replaceState({}, document.title, window.location.pathname);
         } catch (error) {
           console.error('Error storing OAuth tokens:', error);
-          toast.error('Failed to save Google Calendar connection');
+          toast.error('Failed to save Calendar connection');
         }
       }
     };
@@ -55,7 +55,12 @@ export const GoogleOAuthHandler = () => {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
 
-          // Calculate token expiry (typically 1 hour for Google)
+          // Detect provider from user metadata
+          const appMetadata = user.app_metadata;
+          const provider = appMetadata.provider === 'google' ? 'google' : 'azure';
+          const providerName = provider === 'google' ? 'Google' : 'Microsoft';
+
+          // Calculate token expiry
           const expiryDate = new Date();
           expiryDate.setHours(expiryDate.getHours() + 1);
 
@@ -63,7 +68,7 @@ export const GoogleOAuthHandler = () => {
             .from('calendar_connections')
             .upsert({
               user_id: user.id,
-              provider: 'google',
+              provider: provider,
               access_token: session.provider_token,
               refresh_token: session.provider_refresh_token,
               token_expiry: expiryDate.toISOString(),
@@ -74,7 +79,7 @@ export const GoogleOAuthHandler = () => {
 
           if (error) throw error;
 
-          toast.success('Successfully connected to Google Calendar!');
+          toast.success(`Successfully connected to ${providerName} Calendar!`);
         } catch (error) {
           console.error('Error storing OAuth tokens:', error);
         }
