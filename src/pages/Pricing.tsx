@@ -76,6 +76,8 @@ export default function Pricing() {
     setLoading(planName);
 
     try {
+      console.log("Starting checkout for priceId:", priceId);
+      
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
         {
@@ -87,10 +89,19 @@ export default function Pricing() {
         }
       );
 
-      if (error) throw error;
+      console.log("Checkout response:", { data, error });
+
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw error;
+      }
 
       if (data?.url) {
+        console.log("Redirecting to:", data.url);
         window.location.href = data.url;
+      } else {
+        console.error("No URL in response:", data);
+        throw new Error("No checkout URL received");
       }
     } catch (error) {
       console.error("Error creating checkout session:", error);
