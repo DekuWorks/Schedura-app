@@ -1,40 +1,52 @@
-# Welcome to your Lovable project
+# Schedura App
 
-## Project info
+A monorepo for the Schedura scheduling application with web and mobile apps.
 
-**URL**: https://lovable.dev/projects/3cb02f86-70af-4016-9624-1cbc9792e5f9
+## Project Structure
 
-## How can I edit this code?
+```
+schedura-app/
+├── apps/
+│   ├── web/          # Web application (React + Vite)
+│   └── mobile/       # Mobile application (Expo + React Native)
+├── packages/
+│   ├── ui/           # Shared UI components
+│   ├── api-sdk/      # API client SDK
+│   ├── scheduler/    # Scheduling engine
+│   └── config/       # Shared configurations
+└── supabase/         # Database and backend functions
+```
 
-There are several ways of editing your application.
+## Getting Started
 
-**Use Lovable**
+This project uses pnpm workspaces and Turbo for monorepo management.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3cb02f86-70af-4016-9624-1cbc9792e5f9) and start prompting.
+### Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+- Node.js >= 18.0.0
+- pnpm >= 8.0.0
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+pnpm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Start all applications in development mode
+pnpm dev
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Start specific application
+pnpm --filter @schedura/web dev
+pnpm --filter @schedura/mobile dev
 ```
+
+### Available Scripts
+
+- `pnpm dev` - Start all applications in development mode
+- `pnpm build` - Build all applications
+- `pnpm lint` - Lint all packages
+- `pnpm test` - Run all tests
+- `pnpm typecheck` - Type check all packages
 
 **Edit a file directly in GitHub**
 
