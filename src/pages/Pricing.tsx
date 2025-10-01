@@ -49,7 +49,7 @@ const plans = [
       "White-label option",
       "24/7 dedicated support",
     ],
-    priceId: "prod_T9izwWecBzpGDi",
+    priceId: "price_1SDPX7Jd5wbPvQ1I7kGQYsxS",
   },
 ];
 
