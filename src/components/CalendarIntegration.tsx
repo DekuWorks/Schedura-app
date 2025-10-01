@@ -11,14 +11,12 @@ interface CalendarIntegrationProps {
   scheduledEvents: CalendarEvent[];
 }
 
-type Provider = 'google' | 'azure';
+type Provider = 'google';
 
 export const CalendarIntegration = ({ scheduledEvents }: CalendarIntegrationProps) => {
   const [googleConnected, setGoogleConnected] = useState(false);
-  const [microsoftConnected, setMicrosoftConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [googleLastSync, setGoogleLastSync] = useState<string | null>(null);
-  const [microsoftLastSync, setMicrosoftLastSync] = useState<string | null>(null);
 
   useEffect(() => {
     checkConnection();
@@ -38,12 +36,9 @@ export const CalendarIntegration = ({ scheduledEvents }: CalendarIntegrationProp
       if (error) throw error;
 
       const googleConn = connections?.find(c => c.provider === 'google');
-      const msConn = connections?.find(c => c.provider === 'azure');
 
       setGoogleConnected(!!googleConn);
-      setMicrosoftConnected(!!msConn);
       setGoogleLastSync(googleConn?.last_sync || null);
-      setMicrosoftLastSync(msConn?.last_sync || null);
     } catch (error) {
       console.error('Error checking connection:', error);
     }
@@ -76,29 +71,6 @@ export const CalendarIntegration = ({ scheduledEvents }: CalendarIntegrationProp
     }
   };
 
-  const handleMicrosoftConnect = async () => {
-    try {
-      setIsLoading(true);
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'azure',
-        options: {
-          scopes: 'Calendars.ReadWrite offline_access',
-          redirectTo: `${window.location.origin}`,
-        },
-      });
-
-      if (error) throw error;
-
-      toast.success('Redirecting to Microsoft for authorization...');
-    } catch (error) {
-      console.error('Error connecting to Microsoft:', error);
-      toast.error('Failed to connect to Microsoft Calendar');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleDisconnect = async (provider: Provider) => {
     try {
       setIsLoading(true);
@@ -113,13 +85,8 @@ export const CalendarIntegration = ({ scheduledEvents }: CalendarIntegrationProp
 
       if (error) throw error;
 
-      if (provider === 'google') {
-        setGoogleConnected(false);
-        toast.success('Disconnected from Google Calendar');
-      } else {
-        setMicrosoftConnected(false);
-        toast.success('Disconnected from Microsoft Calendar');
-      }
+      setGoogleConnected(false);
+      toast.success('Disconnected from Google Calendar');
     } catch (error) {
       console.error('Error disconnecting:', error);
       toast.error('Failed to disconnect');
@@ -146,29 +113,6 @@ export const CalendarIntegration = ({ scheduledEvents }: CalendarIntegrationProp
     } catch (error) {
       console.error('Error syncing from Google:', error);
       toast.error('Failed to sync from Google Calendar');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSyncFromMicrosoft = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase.functions.invoke('microsoft-calendar-sync', {
-        body: { action: 'fetch' }
-      });
-
-      if (error) throw error;
-
-      if (data.error) {
-        toast.error(data.error);
-      } else {
-        toast.success(data.message);
-        setMicrosoftLastSync(new Date().toISOString());
-      }
-    } catch (error) {
-      console.error('Error syncing from Microsoft:', error);
-      toast.error('Failed to sync from Microsoft Calendar');
     } finally {
       setIsLoading(false);
     }
@@ -204,36 +148,6 @@ export const CalendarIntegration = ({ scheduledEvents }: CalendarIntegrationProp
     }
   };
 
-  const handleExportToMicrosoft = async () => {
-    try {
-      if (scheduledEvents.length === 0) {
-        toast.error('No events to export. Schedule some tasks first!');
-        return;
-      }
-
-      setIsLoading(true);
-      const { data, error } = await supabase.functions.invoke('microsoft-calendar-sync', {
-        body: { 
-          action: 'export',
-          events: scheduledEvents
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.error) {
-        toast.error(data.error);
-      } else {
-        toast.success(data.message);
-      }
-    } catch (error) {
-      console.error('Error exporting to Microsoft:', error);
-      toast.error('Failed to export to Microsoft Calendar');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <Card className="p-6 shadow-[var(--shadow-medium)]">
       <div className="flex items-center gap-2 mb-4">
@@ -242,9 +156,8 @@ export const CalendarIntegration = ({ scheduledEvents }: CalendarIntegrationProp
       </div>
 
       <Tabs defaultValue="google" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="google">Google</TabsTrigger>
-          <TabsTrigger value="microsoft">Microsoft</TabsTrigger>
           <TabsTrigger value="apple">Apple</TabsTrigger>
         </TabsList>
 
@@ -319,89 +232,6 @@ export const CalendarIntegration = ({ scheduledEvents }: CalendarIntegrationProp
 
                 <Button 
                   onClick={() => handleDisconnect('google')} 
-                  variant="ghost" 
-                  className="w-full text-destructive hover:text-destructive"
-                  disabled={isLoading}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Disconnect
-                </Button>
-              </div>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="microsoft" className="space-y-4">
-          {!microsoftConnected ? (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Connect your Microsoft Calendar (Outlook) to sync events and export your scheduled tasks.
-              </p>
-              <Button 
-                onClick={handleMicrosoftConnect} 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Connect Microsoft Calendar
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                You'll be redirected to Microsoft to authorize access to your calendar.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-success">
-                <Check className="h-4 w-4" />
-                <span>Connected to Microsoft Calendar</span>
-              </div>
-
-              {microsoftLastSync && (
-                <p className="text-xs text-muted-foreground">
-                  Last synced: {new Date(microsoftLastSync).toLocaleString()}
-                </p>
-              )}
-
-              <div className="grid gap-2">
-                <Button 
-                  onClick={handleSyncFromMicrosoft} 
-                  variant="outline" 
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                  )}
-                  Import from Microsoft Calendar
-                </Button>
-
-                <Button 
-                  onClick={handleExportToMicrosoft} 
-                  variant="outline" 
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <UploadIcon className="mr-2 h-4 w-4" />
-                  )}
-                  Export to Microsoft Calendar
-                </Button>
-
-                <Button 
-                  onClick={() => handleDisconnect('azure')} 
                   variant="ghost" 
                   className="w-full text-destructive hover:text-destructive"
                   disabled={isLoading}

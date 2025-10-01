@@ -55,10 +55,9 @@ export const GoogleOAuthHandler = () => {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
 
-          // Detect provider from user metadata
+          // Only handle Google provider
           const appMetadata = user.app_metadata;
-          const provider = appMetadata.provider === 'google' ? 'google' : 'azure';
-          const providerName = provider === 'google' ? 'Google' : 'Microsoft';
+          if (appMetadata.provider !== 'google') return;
 
           // Calculate token expiry
           const expiryDate = new Date();
@@ -68,7 +67,7 @@ export const GoogleOAuthHandler = () => {
             .from('calendar_connections')
             .upsert({
               user_id: user.id,
-              provider: provider,
+              provider: 'google',
               access_token: session.provider_token,
               refresh_token: session.provider_refresh_token,
               token_expiry: expiryDate.toISOString(),
@@ -79,7 +78,7 @@ export const GoogleOAuthHandler = () => {
 
           if (error) throw error;
 
-          toast.success(`Successfully connected to ${providerName} Calendar!`);
+          toast.success('Successfully connected to Google Calendar!');
         } catch (error) {
           console.error('Error storing OAuth tokens:', error);
         }
