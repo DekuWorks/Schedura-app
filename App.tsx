@@ -19,10 +19,16 @@ import { supabase } from './supabase';
 interface Task {
   id: string;
   title: string;
-  startTime?: string;
-  endTime?: string;
-  duration: number;
-  category: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high';
+  duration_minutes?: number;
+  start_time?: string;
+  end_time?: string;
+  is_scheduled: boolean;
+  is_completed: boolean;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 function MainApp() {
@@ -34,10 +40,12 @@ function MainApp() {
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
-    startTime: '',
-    endTime: '',
-    duration: 30,
-    category: 'None'
+    description: '',
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    duration_minutes: 30,
+    start_time: '',
+    end_time: '',
+    notes: ''
   });
 
   const categories = ['All Tasks', 'Work', 'Personal', 'Health', 'Learning'];
@@ -79,12 +87,15 @@ function MainApp() {
         .from('tasks')
         .insert({
           title: newTask.title,
-          start_time: newTask.startTime || null,
-          end_time: newTask.endTime || null,
-          duration: newTask.duration,
-          category: newTask.category,
+          description: newTask.description || null,
+          priority: newTask.priority,
+          duration_minutes: newTask.duration_minutes,
+          start_time: newTask.start_time || null,
+          end_time: newTask.end_time || null,
+          is_scheduled: false,
+          is_completed: false,
+          notes: newTask.notes || null,
           user_id: user.id,
-          date: selectedDate.toISOString().split('T')[0],
         })
         .select();
 
@@ -95,7 +106,15 @@ function MainApp() {
       }
 
       setTasks([data[0], ...tasks]);
-      setNewTask({ title: '', startTime: '', endTime: '', duration: 30, category: 'None' });
+      setNewTask({ 
+        title: '', 
+        description: '', 
+        priority: 'medium', 
+        duration_minutes: 30, 
+        start_time: '', 
+        end_time: '', 
+        notes: '' 
+      });
       setShowAddTask(false);
       Alert.alert('Success', 'Task created successfully');
     } catch (error) {
@@ -106,7 +125,7 @@ function MainApp() {
 
   const filteredTasks = selectedCategory === 'All Tasks' 
     ? tasks 
-    : tasks.filter(task => task.category === selectedCategory);
+    : tasks.filter(task => task.priority === selectedCategory.toLowerCase());
 
   const handleSignOut = async () => {
     try {
@@ -257,14 +276,17 @@ function MainApp() {
           ) : (
             <FlatList
               data={filteredTasks}
-              renderItem={({ item }) => (
-                <View style={styles.taskItem}>
-                  <Text style={styles.taskTitle}>{item.title}</Text>
-                  <Text style={styles.taskDetails}>
-                    {item.duration} min • {item.category}
-                  </Text>
-                </View>
-              )}
+                  renderItem={({ item }) => (
+                    <View style={styles.taskItem}>
+                      <Text style={styles.taskTitle}>{item.title}</Text>
+                      <Text style={styles.taskDetails}>
+                        {item.duration_minutes || 30} min • {item.priority} priority
+                      </Text>
+                      {item.description && (
+                        <Text style={styles.taskDescription}>{item.description}</Text>
+                      )}
+                    </View>
+                  )}
               keyExtractor={(item) => item.id}
             />
           )}
@@ -310,34 +332,57 @@ function MainApp() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add New Task</Text>
             
-            <TextInput
-              style={styles.input}
-              placeholder="Task Title"
-              value={newTask.title}
-              onChangeText={(text) => setNewTask({...newTask, title: text})}
-            />
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Start Time (optional)"
-              value={newTask.startTime}
-              onChangeText={(text) => setNewTask({...newTask, startTime: text})}
-            />
-            
-            <TextInput
-              style={styles.input}
-              placeholder="End Time (optional)"
-              value={newTask.endTime}
-              onChangeText={(text) => setNewTask({...newTask, endTime: text})}
-            />
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Duration (minutes)"
-              value={newTask.duration.toString()}
-              onChangeText={(text) => setNewTask({...newTask, duration: parseInt(text) || 30})}
-              keyboardType="numeric"
-            />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Task Title"
+                  value={newTask.title}
+                  onChangeText={(text) => setNewTask({...newTask, title: text})}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Description (optional)"
+                  value={newTask.description}
+                  onChangeText={(text) => setNewTask({...newTask, description: text})}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Priority (low/medium/high)"
+                  value={newTask.priority}
+                  onChangeText={(text) => setNewTask({...newTask, priority: text as 'low' | 'medium' | 'high'})}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Duration (minutes)"
+                  value={newTask.duration_minutes.toString()}
+                  onChangeText={(text) => setNewTask({...newTask, duration_minutes: parseInt(text) || 30})}
+                  keyboardType="numeric"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Start Time (optional)"
+                  value={newTask.start_time}
+                  onChangeText={(text) => setNewTask({...newTask, start_time: text})}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="End Time (optional)"
+                  value={newTask.end_time}
+                  onChangeText={(text) => setNewTask({...newTask, end_time: text})}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Notes (optional)"
+                  value={newTask.notes}
+                  onChangeText={(text) => setNewTask({...newTask, notes: text})}
+                  multiline
+                  numberOfLines={2}
+                />
             
             <View style={styles.modalButtons}>
               <TouchableOpacity 
@@ -556,6 +601,11 @@ const styles = StyleSheet.create({
   taskDetails: {
     fontSize: 14,
     color: '#6b7280',
+  },
+  taskDescription: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 4,
   },
   toggleContainer: {
     flexDirection: 'row',
