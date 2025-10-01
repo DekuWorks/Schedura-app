@@ -212,12 +212,12 @@ export const TaskInput = ({ onTasksAdd }: TaskInputProps) => {
             </div>
             <div>
               <Label htmlFor="category">Category</Label>
-              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+              <Select value={selectedCategoryId || "none"} onValueChange={(val) => setSelectedCategoryId(val === "none" ? "" : val)}>
                 <SelectTrigger id="category">
-                  <SelectValue placeholder="None" />
+                  <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       <div className="flex items-center gap-2">
