@@ -12,6 +12,7 @@ const { width } = Dimensions.get('window');
 
 export default function Calendar({ tasks = [], onDateSelect, selectedDate }) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentView, setCurrentView] = useState('month');
   
   const today = new Date();
   const currentMonth = currentDate.getMonth();
@@ -79,6 +80,20 @@ export default function Calendar({ tasks = [], onDateSelect, selectedDate }) {
           <Text style={styles.monthText}>
             {monthNames[currentMonth]} {currentYear}
           </Text>
+          <View style={styles.viewButtons}>
+            <TouchableOpacity 
+              style={[styles.viewButton, currentView === 'week' && styles.viewButtonActive]}
+              onPress={() => setCurrentView('week')}
+            >
+              <Text style={[styles.viewButtonText, currentView === 'week' && styles.viewButtonTextActive]}>Week</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.viewButton, currentView === 'month' && styles.viewButtonActive]}
+              onPress={() => setCurrentView('month')}
+            >
+              <Text style={[styles.viewButtonText, currentView === 'month' && styles.viewButtonTextActive]}>Month</Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity onPress={goToToday} style={styles.todayButton}>
             <Text style={styles.todayButtonText}>Today</Text>
           </TouchableOpacity>
@@ -146,7 +161,7 @@ export default function Calendar({ tasks = [], onDateSelect, selectedDate }) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#faf8f3',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
@@ -178,8 +193,30 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
   },
+  viewButtons: {
+    flexDirection: 'row',
+    marginTop: 4,
+    gap: 4,
+  },
+  viewButton: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  viewButtonActive: {
+    backgroundColor: '#20B2AA',
+  },
+  viewButtonText: {
+    fontSize: 12,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  viewButtonTextActive: {
+    color: '#ffffff',
+  },
   todayButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -214,11 +251,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   todayCell: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
     borderRadius: 8,
   },
   selectedCell: {
-    backgroundColor: '#e0e7ff',
+    backgroundColor: '#e0f7f7',
     borderRadius: 8,
   },
   dayText: {
@@ -231,7 +268,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   selectedText: {
-    color: '#4F46E5',
+    color: '#20B2AA',
     fontWeight: 'bold',
   },
   taskIndicator: {
@@ -259,7 +296,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   todayDot: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
   },
   taskDot: {
     backgroundColor: '#f59e0b',

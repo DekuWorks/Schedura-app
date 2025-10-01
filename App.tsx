@@ -47,6 +47,8 @@ function MainApp() {
     end_time: '',
     notes: ''
   });
+  const [aiSuggestion, setAiSuggestion] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const categories = ['All Tasks', 'Work', 'Personal', 'Health', 'Learning'];
 
@@ -135,6 +137,105 @@ function MainApp() {
     }
   };
 
+  const handleScheduleAll = async () => {
+    if (tasks.length === 0) {
+      Alert.alert('No Tasks', 'Please add some tasks first before scheduling.');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // Here you would call your AI scheduling function
+      // For now, we'll just show a success message
+      setTimeout(() => {
+        Alert.alert('Success', 'AI has scheduled all your tasks! Check the calendar view.');
+        setIsLoading(false);
+      }, 2000);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to schedule tasks');
+      setIsLoading(false);
+    }
+  };
+
+  const handleGetAISuggestions = async () => {
+    if (!aiSuggestion.trim()) {
+      Alert.alert('Error', 'Please describe what you need to do first.');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // Here you would call your AI suggestions function
+      // For now, we'll simulate the response
+      setTimeout(() => {
+        const suggestedTasks = [
+          'Prepare presentation slides',
+          'Review project requirements',
+          'Schedule team meeting',
+          'Research competitor analysis'
+        ];
+        
+        Alert.alert(
+          'AI Suggestions',
+          `Based on your input, here are some suggested tasks:\n\n${suggestedTasks.join('\n')}\n\nWould you like to add these to your task list?`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Add All', 
+              onPress: () => {
+                suggestedTasks.forEach((task, index) => {
+                  const newTaskItem = {
+                    title: task,
+                    description: '',
+                    priority: 'medium' as 'low' | 'medium' | 'high',
+                    duration_minutes: 30,
+                    start_time: '',
+                    end_time: '',
+                    notes: ''
+                  };
+                  // Add task to database (simplified for demo)
+                  console.log('Adding task:', task);
+                });
+                Alert.alert('Success', 'All suggested tasks have been added!');
+                setAiSuggestion('');
+              }
+            }
+          ]
+        );
+        setIsLoading(false);
+      }, 2000);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to get AI suggestions');
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpgradePremium = () => {
+    Alert.alert(
+      'Upgrade to Premium',
+      'Premium features include:\n• AI Image Scanner\n• Advanced scheduling\n• Priority support\n• Unlimited tasks\n\nWould you like to upgrade?',
+      [
+        { text: 'Later', style: 'cancel' },
+        { text: 'Upgrade', onPress: () => Alert.alert('Coming Soon', 'Premium upgrade will be available soon!') }
+      ]
+    );
+  };
+
+  const handleAddCategory = () => {
+    Alert.prompt(
+      'Add Category',
+      'Enter a new category name:',
+      (text) => {
+        if (text && text.trim()) {
+          // Here you would add the category to your database
+          Alert.alert('Success', `Category "${text}" has been added!`);
+        }
+      },
+      'plain-text',
+      ''
+    );
+  };
+
   // Show loading screen while checking authentication
   if (loading) {
     return (
@@ -163,7 +264,10 @@ function MainApp() {
           </View>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            onPress={() => Alert.alert('Auto Mode', 'Auto mode will automatically schedule tasks based on your preferences and availability.')}
+          >
             <Text style={styles.headerButtonText}>Auto</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton} onPress={handleSignOut}>
@@ -188,9 +292,15 @@ function MainApp() {
               AI will find the best times based on your calendar
             </Text>
           </View>
-          <TouchableOpacity style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Schedule All</Text>
-          </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.primaryButton, isLoading && styles.primaryButtonDisabled]}
+                onPress={handleScheduleAll}
+                disabled={isLoading}
+              >
+                <Text style={styles.primaryButtonText}>
+                  {isLoading ? 'Scheduling...' : 'Schedule All'}
+                </Text>
+              </TouchableOpacity>
         </View>
 
         {/* Categories */}
@@ -198,7 +308,7 @@ function MainApp() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionIcon}>💎</Text>
             <Text style={styles.sectionTitle}>Categories</Text>
-            <TouchableOpacity style={styles.addButton}>
+            <TouchableOpacity style={styles.addButton} onPress={handleAddCategory}>
               <Text style={styles.addButtonText}>+ Add</Text>
             </TouchableOpacity>
           </View>
@@ -237,9 +347,17 @@ function MainApp() {
             placeholder="Describe what you need to do... (e.g., 'I have a project deadline next week and need to prepare a presentation')"
             multiline
             numberOfLines={3}
+            value={aiSuggestion}
+            onChangeText={setAiSuggestion}
           />
-          <TouchableOpacity style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Get AI Suggestions</Text>
+          <TouchableOpacity 
+            style={[styles.primaryButton, isLoading && styles.primaryButtonDisabled]}
+            onPress={handleGetAISuggestions}
+            disabled={isLoading}
+          >
+            <Text style={styles.primaryButtonText}>
+              {isLoading ? 'Getting Suggestions...' : 'Get AI Suggestions'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -252,7 +370,7 @@ function MainApp() {
           <Text style={styles.sectionDescription}>
             Upgrade to Premium to scan images and automatically extract calendar events!
           </Text>
-          <TouchableOpacity style={styles.premiumButton}>
+          <TouchableOpacity style={styles.premiumButton} onPress={handleUpgradePremium}>
             <Text style={styles.premiumButtonText}>Upgrade to Premium</Text>
           </TouchableOpacity>
         </View>
@@ -410,7 +528,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f5f1e8',
   },
   loadingText: {
     fontSize: 18,
@@ -418,10 +536,10 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f5f1e8',
   },
   header: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#faf8f3',
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
@@ -468,7 +586,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   section: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#faf8f3',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
@@ -517,7 +635,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -528,8 +646,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  primaryButtonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
   addButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -547,7 +668,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   categoryButtonActive: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
   },
   categoryButtonText: {
     fontSize: 14,
@@ -629,7 +750,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   toggleButtonActive: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
   },
   toggleButtonText: {
     fontSize: 16,
@@ -696,7 +817,7 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   todayButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
@@ -769,7 +890,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',

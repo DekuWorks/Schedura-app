@@ -121,7 +121,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f5f1e8',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   formContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#faf8f3',
     borderRadius: 16,
     padding: 24,
     shadowColor: '#000',
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   authButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#20B2AA',
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   switchButtonText: {
-    color: '#4F46E5',
+    color: '#20B2AA',
     fontSize: 16,
     fontWeight: '500',
   },
