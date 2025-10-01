@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Edit, Trash2, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -28,6 +29,17 @@ export const CategoryManager = ({ selectedCategoryId, onCategorySelect }: Catego
   const [name, setName] = useState('');
   const [color, setColor] = useState('#6366f1');
   const [workspaceId, setWorkspaceId] = useState<string>('');
+
+  const colorOptions = [
+    { value: '#6366f1', label: 'Indigo' },
+    { value: '#ec4899', label: 'Pink' },
+    { value: '#8b5cf6', label: 'Purple' },
+    { value: '#06b6d4', label: 'Cyan' },
+    { value: '#10b981', label: 'Green' },
+    { value: '#f59e0b', label: 'Amber' },
+    { value: '#ef4444', label: 'Red' },
+    { value: '#3b82f6', label: 'Blue' },
+  ];
 
   useEffect(() => {
     fetchWorkspace();
@@ -162,20 +174,32 @@ export const CategoryManager = ({ selectedCategoryId, onCategorySelect }: Catego
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="color">Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="color"
-                      type="color"
-                      value={color}
-                      onChange={(e) => setColor(e.target.value)}
-                      className="w-20 h-10"
-                    />
-                    <Input
-                      value={color}
-                      onChange={(e) => setColor(e.target.value)}
-                      placeholder="#6366f1"
-                    />
-                  </div>
+                  <Select value={color} onValueChange={setColor}>
+                    <SelectTrigger id="color">
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-4 h-4 rounded-full" 
+                            style={{ backgroundColor: color }}
+                          />
+                          {colorOptions.find(c => c.value === color)?.label}
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="bg-background">
+                      {colorOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-4 h-4 rounded-full" 
+                              style={{ backgroundColor: option.value }}
+                            />
+                            {option.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button onClick={handleSave} className="w-full">
                   {editingCategory ? 'Update' : 'Create'}
