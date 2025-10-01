@@ -1,18 +1,13 @@
-import { View, Text, StyleSheet, Platform } from 'react-native';
-import { useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
 export default function HomeScreen() {
-  useEffect(() => {
-    // Redirect to web app for now
-    if (Platform.OS === 'web') {
-      window.location.href = '/';
-    }
-  }, []);
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Schedura App</Text>
       <Text style={styles.subtitle}>Your smart scheduling assistant</Text>
+      <Text style={styles.description}>
+        Welcome to Schedura! This is your mobile app for smart scheduling.
+      </Text>
     </View>
   );
 }
@@ -26,13 +21,22 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#4F46E5',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#666',
     textAlign: 'center',
+    marginBottom: 20,
+  },
+  description: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });
+
