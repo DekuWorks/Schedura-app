@@ -11,6 +11,7 @@ import { GoogleOAuthHandler } from "@/components/GoogleOAuthHandler";
 import { CategoryManager } from "@/components/CategoryManager";
 import { AISuggestions } from "@/components/AISuggestions";
 import { SubscriptionStatus } from "@/components/SubscriptionStatus";
+import { ImageEventScanner } from "@/components/ImageEventScanner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -18,10 +19,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { scheduleTasks, downloadICS } from "@/lib/scheduler";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const Index = () => {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { plan } = useSubscription();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [scheduledEvents, setScheduledEvents] = useState<CalendarEvent[]>([]);
   const [calendarView, setCalendarView] = useState<"week" | "month">("week");
@@ -141,6 +144,11 @@ const Index = () => {
                   duration: 60
                 }]);
               }}
+            />
+            
+            <ImageEventScanner 
+              onEventsExtracted={handleTasksAdd}
+              userPlan={plan}
             />
             
             <Tabs defaultValue="manual" className="w-full">
