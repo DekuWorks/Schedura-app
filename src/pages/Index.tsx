@@ -10,6 +10,7 @@ import { EventDialog } from "@/components/EventDialog";
 import { GoogleOAuthHandler } from "@/components/GoogleOAuthHandler";
 import { CategoryManager } from "@/components/CategoryManager";
 import { AISuggestions } from "@/components/AISuggestions";
+import { SubscriptionStatus } from "@/components/SubscriptionStatus";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -82,6 +83,7 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              <SubscriptionStatus />
               <Button onClick={toggleTheme} variant="ghost" size="icon">
                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
