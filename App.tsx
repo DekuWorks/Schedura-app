@@ -14,6 +14,8 @@ import {
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import AuthScreen from './src/screens/AuthScreen';
 import Calendar from './src/components/Calendar';
+import CategoryManager from './src/components/CategoryManager';
+import CategoryPicker from './src/components/CategoryPicker';
 import { supabase } from './supabase';
 
 interface Task {
@@ -29,6 +31,17 @@ interface Task {
   notes?: string;
   created_at: string;
   updated_at: string;
+  category?: {
+    id: string;
+    name: string;
+    color: string;
+  };
+}
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
 }
 
 function MainApp() {
@@ -49,8 +62,17 @@ function MainApp() {
   });
   const [aiSuggestion, setAiSuggestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  const categories = ['All Tasks', 'Work', 'Personal', 'Health', 'Learning'];
+  const [categories, setCategories] = useState<Category[]>([
+    { id: '1', name: 'Work', color: '#4ECDC4' },
+    { id: '2', name: 'Personal', color: '#FF6B6B' },
+    { id: '3', name: 'Health', color: '#96CEB4' },
+    { id: '4', name: 'Learning', color: '#FFEAA7' },
+    { id: '5', name: 'Finance', color: '#DDA0DD' },
+  ]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All Tasks');
 
   // Load tasks from Supabase
   useEffect(() => {
@@ -85,20 +107,23 @@ function MainApp() {
     }
 
     try {
+      const taskData = {
+        title: newTask.title,
+        description: newTask.description || null,
+        priority: newTask.priority,
+        duration_minutes: newTask.duration_minutes,
+        start_time: newTask.start_time || null,
+        end_time: newTask.end_time || null,
+        is_scheduled: false,
+        is_completed: false,
+        notes: newTask.notes || null,
+        user_id: user.id,
+        category: selectedCategory,
+      };
+
       const { data, error } = await supabase
         .from('tasks')
-        .insert({
-          title: newTask.title,
-          description: newTask.description || null,
-          priority: newTask.priority,
-          duration_minutes: newTask.duration_minutes,
-          start_time: newTask.start_time || null,
-          end_time: newTask.end_time || null,
-          is_scheduled: false,
-          is_completed: false,
-          notes: newTask.notes || null,
-          user_id: user.id,
-        })
+        .insert(taskData)
         .select();
 
       if (error) {
@@ -117,6 +142,7 @@ function MainApp() {
         end_time: '', 
         notes: '' 
       });
+      setSelectedCategory(null);
       setShowAddTask(false);
       Alert.alert('Success', 'Task created successfully');
     } catch (error) {
@@ -125,9 +151,9 @@ function MainApp() {
     }
   };
 
-  const filteredTasks = selectedCategory === 'All Tasks' 
+  const filteredTasks = selectedCategoryFilter === 'All Tasks' 
     ? tasks 
-    : tasks.filter(task => task.priority === selectedCategory.toLowerCase());
+    : tasks.filter(task => task.category?.name === selectedCategoryFilter);
 
   const handleSignOut = async () => {
     try {
@@ -222,18 +248,11 @@ function MainApp() {
   };
 
   const handleAddCategory = () => {
-    Alert.prompt(
-      'Add Category',
-      'Enter a new category name:',
-      (text) => {
-        if (text && text.trim()) {
-          // Here you would add the category to your database
-          Alert.alert('Success', `Category "${text}" has been added!`);
-        }
-      },
-      'plain-text',
-      ''
-    );
+    setShowCategoryManager(true);
+  };
+
+  const handleCategoryAdded = (newCategory: Category) => {
+    setCategories(prev => [...prev, newCategory]);
   };
 
   // Show loading screen while checking authentication
@@ -313,25 +332,33 @@ function MainApp() {
             </TouchableOpacity>
           </View>
           <FlatList
-            data={categories}
+            data={['All Tasks', ...categories.map(cat => cat.name)]}
             horizontal
             showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.categoryButton,
-                  selectedCategory === item && styles.categoryButtonActive
-                ]}
-                onPress={() => setSelectedCategory(item)}
-              >
-                <Text style={[
-                  styles.categoryButtonText,
-                  selectedCategory === item && styles.categoryButtonTextActive
-                ]}>
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            )}
+            renderItem={({ item }) => {
+              const category = categories.find(cat => cat.name === item);
+              const isSelected = selectedCategoryFilter === item;
+              
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.categoryButton,
+                    isSelected && styles.categoryButtonActive
+                  ]}
+                  onPress={() => setSelectedCategoryFilter(item)}
+                >
+                  {category && (
+                    <View style={[styles.categoryColorIndicator, { backgroundColor: category.color }]} />
+                  )}
+                  <Text style={[
+                    styles.categoryButtonText,
+                    isSelected && styles.categoryButtonTextActive
+                  ]}>
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }}
             keyExtractor={(item) => item}
           />
         </View>
@@ -396,7 +423,15 @@ function MainApp() {
               data={filteredTasks}
                   renderItem={({ item }) => (
                     <View style={styles.taskItem}>
-                      <Text style={styles.taskTitle}>{item.title}</Text>
+                      <View style={styles.taskHeader}>
+                        <Text style={styles.taskTitle}>{item.title}</Text>
+                        {item.category && (
+                          <View style={styles.taskCategory}>
+                            <View style={[styles.taskCategoryDot, { backgroundColor: item.category.color }]} />
+                            <Text style={styles.taskCategoryText}>{item.category.name}</Text>
+                          </View>
+                        )}
+                      </View>
                       <Text style={styles.taskDetails}>
                         {item.duration_minutes || 30} min • {item.priority} priority
                       </Text>
@@ -471,6 +506,24 @@ function MainApp() {
                   onChangeText={(text) => setNewTask({...newTask, priority: text as 'low' | 'medium' | 'high'})}
                 />
 
+                <TouchableOpacity
+                  style={styles.categorySelector}
+                  onPress={() => setShowCategoryPicker(true)}
+                >
+                  <View style={styles.categorySelectorContent}>
+                    <Text style={styles.categorySelectorLabel}>Category:</Text>
+                    {selectedCategory ? (
+                      <View style={styles.selectedCategoryDisplay}>
+                        <View style={[styles.selectedCategoryDot, { backgroundColor: selectedCategory.color }]} />
+                        <Text style={styles.selectedCategoryText}>{selectedCategory.name}</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.categorySelectorPlaceholder}>Select Category</Text>
+                    )}
+                  </View>
+                  <Text style={styles.categorySelectorArrow}>▼</Text>
+                </TouchableOpacity>
+
                 <TextInput
                   style={styles.input}
                   placeholder="Duration (minutes)"
@@ -518,10 +571,25 @@ function MainApp() {
             </View>
           </View>
         </View>
-      </Modal>
-    </View>
-  );
-}
+          </Modal>
+
+          {/* Category Manager Modal */}
+          <CategoryManager
+            visible={showCategoryManager}
+            onClose={() => setShowCategoryManager(false)}
+            onCategoryAdded={handleCategoryAdded}
+          />
+
+          {/* Category Picker Modal */}
+          <CategoryPicker
+            visible={showCategoryPicker}
+            onClose={() => setShowCategoryPicker(false)}
+            onSelectCategory={setSelectedCategory}
+            selectedCategoryId={selectedCategory?.id}
+          />
+        </View>
+      );
+    }
 
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -727,6 +795,77 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9ca3af',
     marginTop: 4,
+  },
+  taskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  taskCategory: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  taskCategoryDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+  },
+  taskCategoryText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  categoryColorIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  categorySelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    padding: 16,
+    backgroundColor: '#ffffff',
+    marginBottom: 16,
+  },
+  categorySelectorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  categorySelectorLabel: {
+    fontSize: 16,
+    color: '#111827',
+    marginRight: 12,
+  },
+  selectedCategoryDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectedCategoryDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  selectedCategoryText: {
+    fontSize: 16,
+    color: '#111827',
+    fontWeight: '500',
+  },
+  categorySelectorPlaceholder: {
+    fontSize: 16,
+    color: '#9ca3af',
+  },
+  categorySelectorArrow: {
+    fontSize: 12,
+    color: '#6b7280',
   },
   toggleContainer: {
     flexDirection: 'row',
