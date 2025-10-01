@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { 
   StyleSheet, 
@@ -11,6 +11,10 @@ import {
   Modal,
   FlatList
 } from 'react-native';
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import AuthScreen from './src/screens/AuthScreen';
+import Calendar from './src/components/Calendar';
+import { supabase } from './supabase';
 
 interface Task {
   id: string;
@@ -21,10 +25,12 @@ interface Task {
   category: string;
 }
 
-export default function App() {
+function MainApp() {
+  const { user, signOut, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'calendar' | 'availability'>('calendar');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All Tasks');
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
@@ -36,23 +42,93 @@ export default function App() {
 
   const categories = ['All Tasks', 'Work', 'Personal', 'Health', 'Learning'];
 
-  const addTask = () => {
-    if (newTask.title.trim()) {
-      const task: Task = {
-        id: Date.now().toString(),
-        ...newTask
-      };
-      setTasks([...tasks, task]);
+  // Load tasks from Supabase
+  useEffect(() => {
+    if (user) {
+      loadTasks();
+    }
+  }, [user]);
+
+  const loadTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading tasks:', error);
+        return;
+      }
+
+      setTasks(data || []);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+    }
+  };
+
+  const addTask = async () => {
+    if (!newTask.title.trim()) {
+      Alert.alert('Error', 'Please enter a task title');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({
+          title: newTask.title,
+          start_time: newTask.startTime || null,
+          end_time: newTask.endTime || null,
+          duration: newTask.duration,
+          category: newTask.category,
+          user_id: user.id,
+          date: selectedDate.toISOString().split('T')[0],
+        })
+        .select();
+
+      if (error) {
+        Alert.alert('Error', 'Failed to create task');
+        console.error('Error creating task:', error);
+        return;
+      }
+
+      setTasks([data[0], ...tasks]);
       setNewTask({ title: '', startTime: '', endTime: '', duration: 30, category: 'None' });
       setShowAddTask(false);
-    } else {
-      Alert.alert('Error', 'Please enter a task title');
+      Alert.alert('Success', 'Task created successfully');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create task');
+      console.error('Error creating task:', error);
     }
   };
 
   const filteredTasks = selectedCategory === 'All Tasks' 
     ? tasks 
     : tasks.filter(task => task.category === selectedCategory);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to sign out');
+    }
+  };
+
+  // Show loading screen while checking authentication
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Show auth screen if user is not logged in
+  if (!user) {
+    return <AuthScreen />;
+  }
 
   return (
     <View style={styles.container}>
@@ -71,8 +147,8 @@ export default function App() {
           <TouchableOpacity style={styles.headerButton}>
             <Text style={styles.headerButtonText}>Auto</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton}>
-            <Text style={styles.headerButtonText}>Export</Text>
+          <TouchableOpacity style={styles.headerButton} onPress={handleSignOut}>
+            <Text style={styles.headerButtonText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -216,34 +292,11 @@ export default function App() {
 
         {/* Calendar View */}
         {activeTab === 'calendar' && (
-          <View style={styles.calendarSection}>
-            <View style={styles.calendarHeader}>
-              <Text style={styles.calendarDateRange}>Sep 28 - Oct 4, 2025</Text>
-              <View style={styles.calendarControls}>
-                <TouchableOpacity style={styles.calendarButton}>
-                  <Text style={styles.calendarButtonText}>Week</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.calendarButton}>
-                  <Text style={styles.calendarButtonText}>Month</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.calendarNavigation}>
-              <TouchableOpacity style={styles.navButton}>
-                <Text style={styles.navButtonText}>←</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.todayButton}>
-                <Text style={styles.todayButtonText}>Today</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.navButton}>
-                <Text style={styles.navButtonText}>→</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.calendarGrid}>
-              <Text style={styles.calendarPlaceholder}>📅 Calendar View</Text>
-              <Text style={styles.calendarSubtext}>Weekly calendar with time slots will be displayed here</Text>
-            </View>
-          </View>
+          <Calendar 
+            tasks={tasks}
+            onDateSelect={setSelectedDate}
+            selectedDate={selectedDate}
+          />
         )}
       </ScrollView>
 
@@ -308,6 +361,16 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#6b7280',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
@@ -667,3 +730,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
+  );
+}
